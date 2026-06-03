@@ -1,7 +1,14 @@
 import subprocess
+import sys
+import platform
 
 import cv2
 import numpy as np
+
+# Automatically use Apple Silicon/Mac hardware encoding if available, otherwise fallback to libx264
+use_libx264 = platform.system() != "Darwin"
+
+use_tcp = False
 
 
 class VideoOutput:
@@ -37,25 +44,38 @@ class VideoOutput:
                 "-i",
                 "-",
                 "-c:v",
-                "h264_videotoolbox",
+                "libx264" if use_libx264 else "h264_videotoolbox",
                 "-b:v",
                 "4000k",
                 "-tune",
                 "zerolatency",
                 "-preset",
-                "superfast",
+                "ultrafast",
+            ]
+
+            if use_tcp:
+                ffmpeg_cmd += [
+                    "-rtsp_transport",
+                    "tcp",
+                ]
+
+            ffmpeg_cmd += [
                 "-f",
                 "rtsp",
-                stream_url,
             ]
-            self.writer = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+
+            ffmpeg_cmd.append(stream_url)
+
+            self.writer = subprocess.Popen(
+                ffmpeg_cmd, stdin=subprocess.PIPE, stderr=sys.stderr
+            )
             self.stream = True
         else:
             raise ValueError("Either output_path or stream_url must be provided.")
 
     def write(self, frame: np.ndarray):
         if self.stream:
-            self.writer.stdin.write(frame.tobytes())
+            self.writer.stdin.write(frame)
         else:
             self.writer.write(frame)
 

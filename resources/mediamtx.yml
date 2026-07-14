@@ -66,13 +66,11 @@ authInternalUsers:
     # An empty path means any path.
     # Regular expressions can be used by using a tilde as prefix.
     path:
-  # - action: read
-  #   path:
   - action: playback
     path:
 
-- user: admin
-  pass: tEsTgfhjkm1729
+- user: admin  # overridden by MTX_AUTHINTERNALUSERS_1_USER in .env
+  pass: ""     # overridden by MTX_AUTHINTERNALUSERS_1_PASS in .env
   permissions:
   - action: read
     path:
